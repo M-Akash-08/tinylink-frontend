@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
-const API = "http://localhost:3000/api";
+// USE BACKEND URL INSTEAD OF LOCALHOST
+const API = "https://tinylink-backend-ef8p.onrender.com/api";
 
 function Dashboard() {
   const [url, setUrl] = useState("");
@@ -9,29 +10,36 @@ function Dashboard() {
   const [links, setLinks] = useState([]);
   const [message, setMessage] = useState("");
 
-
   const [health, setHealth] = useState("");
-const [checkingHealth, setCheckingHealth] = useState(false);
+  const [checkingHealth, setCheckingHealth] = useState(false);
 
-const checkHealth = async () => {
-  setCheckingHealth(true);
-  setHealth("");
-  try {
-    const res = await axios.get("http://localhost:3000/healthz");
-    if (res.data.ok) setHealth("🟢 Server Healthy");
-    else setHealth("🟡 Server Responded But Not OK");
-  } catch (err) {
-    setHealth("🔴 Server Down");
-  }
-  setCheckingHealth(false);
-};
+  const checkHealth = async () => {
+    setCheckingHealth(true);
+    setHealth("");
+    try {
+      const res = await axios.get("https://tinylink-backend-ef8p.onrender.com/healthz");
+      if (res.data.ok) setHealth("🟢 Server Healthy");
+      else setHealth("🟡 Server Responded But Not OK");
+    } catch (err) {
+      setHealth("🔴 Server Down");
+    }
+    setCheckingHealth(false);
+  };
 
-  // Load all existing short links
+  // Load links + normalize backend field names
   const loadLinks = async () => {
     try {
       const res = await axios.get(`${API}/links`);
-      setLinks(res.data);
-      console.log(res)
+
+      const normalized = res.data.map((d) => ({
+        code: d.code,
+        url: d.url,
+        totalClicks: d.totalClicks ?? d.totalclicks ?? 0,
+        createdAt: d.createdAt ?? d.createdat,
+        lastClickedAt: d.lastClickedAt ?? d.lastclickedat,
+      }));
+
+      setLinks(normalized);
     } catch (err) {
       console.error("Error loading links:", err);
     }
@@ -47,22 +55,31 @@ const checkHealth = async () => {
     setMessage("");
 
     try {
-      await axios.post(`${API}/links`, { url, code });
+      const res = await axios.post(`${API}/links`, { url, code });
 
-      setMessage("Short link created successfully!");
+      const d = res.data;
+      const newLink = {
+        code: d.code,
+        url: d.url,
+        totalClicks: d.totalClicks ?? d.totalclicks ?? 0,
+        createdAt: d.createdAt ?? d.createdat,
+        lastClickedAt: d.lastClickedAt ?? d.lastclickedat,
+      };
+
+      setLinks([newLink, ...links]);
+
+      setMessage("Short link created!");
       setUrl("");
       setCode("");
-
-      // Refresh list
-      loadLinks();
     } catch (err) {
+      console.error(err);
       setMessage(err.response?.data?.error || "Error creating link");
     }
   };
 
   // Copy short link
-  const handleCopy = (text) => {
-    navigator.clipboard.writeText(text);
+  const handleCopy = (shortUrl) => {
+    navigator.clipboard.writeText(shortUrl);
     alert("Copied!");
   };
 
@@ -80,92 +97,61 @@ const checkHealth = async () => {
 
   return (
     <div style={{ maxWidth: 900, margin: "40px auto", fontFamily: "Arial" }}>
-      <h1 style={{ marginBottom: 20 }}>TinyLink Dashboard</h1>
+      <h1>TinyLink Dashboard</h1>
 
-      {/* Create Short Link */}
-      <div style={{ marginBottom: 40 }}>
-        <form onSubmit={handleCreate}>
-          <div>
-            <label>Target URL *</label>
-            <input
-              type="text"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              required
-              style={{
-                width: "100%",
-                padding: 10,
-                marginTop: 5,
-                marginBottom: 15,
-              }}
-            />
-          </div>
+      {/* Create Link */}
+      <form onSubmit={handleCreate} style={{ marginBottom: 30 }}>
+        <label>Target URL *</label>
+        <input
+          type="text"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          required
+          style={{ width: "100%", padding: 10, marginBottom: 10 }}
+        />
 
-          <div>
-            <label>Custom Code (6-8 chars)</label>
-            <input
-              type="text"
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              style={{
-                width: "100%",
-                padding: 10,
-                marginTop: 5,
-              }}
-            />
-          </div>
+        <label>Custom Code (optional)</label>
+        <input
+          type="text"
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          style={{ width: "100%", padding: 10 }}
+        />
 
-          <button
-            type="submit"
-            style={{
-              marginTop: 20,
-              padding: "10px 20px",
-              background: "#007bff",
-              color: "white",
-              border: "none",
-              cursor: "pointer",
-            }}
-          >
-            Create
-          </button>
+        <button
+          type="submit"
+          style={{
+            marginTop: 20,
+            padding: "10px 20px",
+            background: "blue",
+            color: "white",
+          }}
+        >
+          Create
+        </button>
 
-          {message && (
-            <p style={{ marginTop: 10, color: "green" }}>{message}</p>
-          )}
-        </form>
-      </div>
-      <div style={{ marginBottom: 20 }}>
-  <button
-    onClick={checkHealth}
-    style={{
-      padding: "10px 15px",
-      background: "#28a745",
-      color: "white",
-      border: "none",
-      cursor: "pointer",
-      borderRadius: 5,
-      marginRight: 10
-    }}
-  >
-    {checkingHealth ? "Checking..." : "Check Server Health"}
-  </button>
+        {message && <p style={{ marginTop: 10 }}>{message}</p>}
+      </form>
 
-  {health && (
-    <span style={{ fontSize: 16, marginLeft: 10 }}>
-      {health}
-    </span>
-  )}
-</div>
+      {/* Server Health */}
+      <button
+        onClick={checkHealth}
+        style={{
+          padding: "10px 15px",
+          background: "green",
+          color: "white",
+          border: "none",
+          cursor: "pointer",
+        }}
+      >
+        {checkingHealth ? "Checking..." : "Check Server Health"}
+      </button>
+      <span style={{ marginLeft: 10 }}>{health}</span>
 
       {/* Links Table */}
-      <h2>All Short Links</h2>
+      <h2 style={{ marginTop: 30 }}>All Short Links</h2>
 
-      <table
-        width="100%"
-        border="1"
-        cellPadding="10"
-        style={{ borderCollapse: "collapse", marginTop: 15 }}
-      >
+      <table width="100%" border="1" cellPadding="10">
         <thead>
           <tr>
             <th>Code</th>
@@ -177,32 +163,27 @@ const checkHealth = async () => {
 
         <tbody>
           {links.map((link) => {
-            const shortUrl = `http://localhost:3000/${link.code}`;
-            console.log(shortUrl)
+            const shortUrl = `https://tinylink-backend-ef8p.onrender.com/${link.code}`;
+
             return (
               <tr key={link.code}>
                 <td>
-                  <a href={shortUrl} target="_blank" rel="noreferrer">
-                    {link.code}
-                  </a>
+                  <a href={shortUrl} target="_blank">{link.code}</a>
                 </td>
 
-                <td style={{ maxWidth: 300, overflow: "hidden", textOverflow: "ellipsis" }}>
+                <td style={{ maxWidth: 300 }}>
                   {link.url}
                 </td>
 
-                <td style={{ textAlign: "center" }}>{link.totalclicks}</td>
+                <td style={{ textAlign: "center" }}>
+                  {link.totalClicks}
+                </td>
 
-                <td style={{ display: "flex", gap: "10px" }}>
+                <td style={{ display: "flex", gap: 10 }}>
                   <button onClick={() => handleCopy(shortUrl)}>Copy</button>
-
-                  <button
-                    onClick={() => handleDelete(link.code)}
-                    style={{ color: "red" }}
-                  >
+                  <button onClick={() => handleDelete(link.code)} style={{ color: "red" }}>
                     Delete
                   </button>
-
                   <a href={`/stats/${link.code}`}>Stats</a>
                 </td>
               </tr>
