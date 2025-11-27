@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams, Link } from "react-router-dom";
 
-const API = "http://localhost:3000/api";
+const API = "https://tinylink-backend-ef8p.onrender.com/api";
 
 function Stats() {
   const { code } = useParams();
