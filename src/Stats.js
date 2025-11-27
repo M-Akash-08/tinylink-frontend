@@ -19,9 +19,9 @@ function Stats() {
         const normalized = {
           code: d.code,
           url: d.url,
-          totalClicks: d.totalclicks ?? d.totalclicks ?? 0,
-          createdAt: d.createdat ?? d.createdat ?? null,
-          lastClickedAt: d.lastclickedat ?? d.lastclicked_at ?? null,
+          totalclicks: d.totalclicks ?? d.totalclicks ?? 0,
+          createdat: d.createdat ?? d.createdat ?? null,
+          lastclickedat: d.lastclickedat ?? d.lastclicked_at ?? null,
         };
 
         setInfo(normalized);
