@@ -14,14 +14,14 @@ function Stats() {
       .get(`${API}/links/${code}`)
       .then((res) => {
         const d = res.data;
-        // console.log(d);
+        console.log(d);
         // Normalize backend fields
         const normalized = {
           code: d.code,
           url: d.url,
           totalclicks: d.totalclicks ?? d.totalclicks ?? 0,
           createdat: d.createdat ?? d.createdat ?? null,
-          lastclickedat: d.lastclickedat ?? d.lastclicked_at ?? null,
+          lastclickedat: d.lastclickedat ?? d.lastclickedat ?? null,
         };
 
         setInfo(normalized);
@@ -40,7 +40,7 @@ function Stats() {
 
       <div style={{ marginTop: 20 }}>
         <p>
-          <b>Short URL:</b> http://localhost:3000/{info.code}
+          <b>Short URL:</b> https://tinylink-backend-ef8p.onrender.com/api{info.code}
         </p>
 
         <p>
