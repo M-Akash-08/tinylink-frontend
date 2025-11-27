@@ -51,20 +51,20 @@ function Stats() {
         </p>
 
         <p>
-          <b>Total Clicks:</b> {info.totalClicks}
+          <b>Total Clicks:</b> {info.totalclicks}
         </p>
 
         <p>
           <b>Created At:</b>{" "}
           {info.createdAt
-            ? new Date(info.createdAt).toLocaleString()
+            ? new Date(info.createdat).toLocaleString()
             : "Unknown"}
         </p>
 
         <p>
           <b>Last Clicked At:</b>{" "}
           {info.lastClickedAt
-            ? new Date(info.lastClickedAt).toLocaleString()
+            ? new Date(info.lastclickedat).toLocaleString()
             : "Never clicked yet"}
         </p>
       </div>
